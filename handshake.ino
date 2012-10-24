@@ -2,12 +2,17 @@
   Handshake matching
  */
 
-const int TIME_THRESHOLD_MIN = 40;
-const int TIME_THRESHOLD_MAX = 600;
+#include <SoftwareSerial.h>
+
+SoftwareSerial impSerial(8, 9);
+
+const int TIME_THRESHOLD_MIN = 20;
+const int TIME_THRESHOLD_MAX = 400;
 const int MIN_CROSSINGS = 4;
 const int AVG_SIZE = 5; // average the first 5 values for a baseline
 const int DELAY_TIME = 3; 
 const int THRESHOLD = 2; // accelerometer values must be greater than this
+const char * UUID = "ABC123";
 
 long timestamp = 0;
 long timestamps[MIN_CROSSINGS];
@@ -20,7 +25,7 @@ int avg = 0;
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
-  
+//  Serial.print("test");
   int avgPos = 0;
   while (avgPos < AVG_SIZE) {
     avgPos++;
@@ -32,11 +37,6 @@ void setup() {
 }
 
 boolean crossedAvg() {
-//  Serial.print(avg);
-//  Serial.print(" ");
-//  Serial.print(current);
-//  Serial.print(" ");
-//  Serial.println(prev);
   return ((prev < avg && current > avg) || (prev > avg && current < avg));
 }
 
@@ -74,8 +74,20 @@ void loop() {
         timestamp_pos++;
       }
       if (timestamp_pos == MIN_CROSSINGS) {
-        reset();
+
+        impSerial.print("{\"id\": ");
+        impSerial.print(UUID);
+        impSerial.print(", \"values\":[");
+////        impSerial.println();
+        for (int i = 0; i< MIN_CROSSINGS; i++) {
+          impSerial.print(timestamps[i]);
+          if (i < MIN_CROSSINGS - 1) {
+            impSerial.print(", ");
+          }
+        }
+        impSerial.println("]}");
         Serial.println("Handshake");
+        reset();
       }
     } else {
       reset();
